@@ -1,0 +1,151 @@
+{
+  "gerado_em": "2026-11-03T10:09:37+00:00",
+  "user_agent": "AgendaCulturalSalvadorBot/1.0 (coletor de agenda cultural; +https://github.com/agenda-cultural-salvador)",
+  "politica": {
+    "requisicoes_por_fonte": 1,
+    "robots_txt": "consultado antes de cada host (RFC 9309 quando ausente)",
+    "retry": "nenhum",
+    "contorno": "nenhum (sem proxy, sem troca de UA, sem navegador headless)",
+    "timeout_s": 15
+  },
+  "resumo": {
+    "alcançaveis_http_200": 8,
+    "bloqueadas": 4,
+    "indisponiveis": 1,
+    "total": 13
+  },
+  "resultados": [
+    {
+      "erro": "FonteBloqueada",
+      "mensagem": "fonte recusou acesso: HTTP 429 em https://shotgun.live/pt-br/cities/salvador",
+      "fonte_id": "shotgun_salvador",
+      "url": "https://shotgun.live/pt-br/cities/salvador",
+      "acessivel": false,
+      "status": 429,
+      "sondado_em": "2026-11-03T10:08:33+00:00"
+    },
+    {
+      "erro": "FonteBloqueada",
+      "mensagem": "fonte recusou acesso: HTTP 429 em https://shotgun.live/pt-br/venues/manifesto",
+      "fonte_id": "shotgun_manifesto",
+      "url": "https://shotgun.live/pt-br/venues/manifesto",
+      "acessivel": false,
+      "status": 429,
+      "sondado_em": "2026-11-03T10:08:34+00:00"
+    },
+    {
+      "erro": "FonteBloqueada",
+      "mensagem": "fonte recusou acesso: HTTP 403 em https://ingresse.com/",
+      "fonte_id": "ingresse",
+      "url": "https://ingresse.com/",
+      "acessivel": false,
+      "status": 403,
+      "sondado_em": "2026-11-03T10:08:35+00:00"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "tamanho": 428117,
+      "duracao_s": 0.975,
+      "robots": "permitido",
+      "url": "https://www.sympla.com.br/eventos/salvador-ba",
+      "sondado_em": "2026-11-03T10:08:36+00:00",
+      "fonte_id": "sympla_salvador"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html",
+      "tamanho": 10857,
+      "duracao_s": 1.067,
+      "robots": "ausente",
+      "url": "https://site.bileto.sympla.com.br/casarosa/",
+      "sondado_em": "2026-11-03T10:08:38+00:00",
+      "fonte_id": "casa_rosa"
+    },
+    {
+      "erro": "FonteIndisponivel",
+      "mensagem": "não foi possível alcançar https://www.eventim.com.br/city/salvador-1143/: The read operation timed out",
+      "fonte_id": "eventim_salvador",
+      "url": "https://www.eventim.com.br/city/salvador-1143/",
+      "acessivel": false,
+      "sondado_em": "2026-11-03T10:09:08+00:00"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 120974,
+      "duracao_s": 1.158,
+      "robots": "permitido",
+      "url": "https://www.bilheteriadigital.com/busca/salvador",
+      "sondado_em": "2026-11-03T10:09:10+00:00",
+      "fonte_id": "bilheteria_digital_salvador"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 973329,
+      "duracao_s": 3.112,
+      "robots": "permitido",
+      "fonte_id": "ticketmaker",
+      "url": "https://www.ticketmaker.com.br/",
+      "sondado_em": "2026-11-03T10:09:28+00:00"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "tamanho": 221647,
+      "duracao_s": 1.419,
+      "robots": "permitido",
+      "fonte_id": "ticketmaker_eventos",
+      "url": "https://vendas.ticketmaker.com.br/Eventos",
+      "sondado_em": "2026-11-03T10:09:30+00:00"
+    },
+    {
+      "erro": "FonteBloqueada",
+      "mensagem": "fonte recusou acesso: HTTP 403 em https://www.ticketmaster.com.br/",
+      "fonte_id": "ticketmaster_brasil",
+      "url": "https://www.ticketmaster.com.br/",
+      "acessivel": false,
+      "status": 403,
+      "sondado_em": "2026-11-03T10:09:31+00:00"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "tamanho": 56768,
+      "duracao_s": 1.706,
+      "robots": "permitido",
+      "fonte_id": "bora_tickets",
+      "url": "https://vendas.boratickets.com.br/",
+      "sondado_em": "2026-11-03T10:09:33+00:00"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 1311237,
+      "duracao_s": 1.28,
+      "robots": "permitido",
+      "fonte_id": "pida",
+      "url": "https://www.pida.com.br/eventos",
+      "sondado_em": "2026-11-03T10:09:35+00:00"
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "tamanho": 619886,
+      "duracao_s": 1.063,
+      "robots": "permitido",
+      "fonte_id": "nokta_salvador",
+      "url": "https://www.noktatickets.com.br/eventos/em/salvador",
+      "sondado_em": "2026-11-03T10:09:37+00:00"
+    }
+  ]
+}

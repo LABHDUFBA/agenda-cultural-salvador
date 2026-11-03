@@ -1,0 +1,29 @@
+# Solicitações e Localizações de Feiras
+
+**Localizações de Feiras:**
+
+| **FEIRA** | **NÚMERO DE FEIRANTES** | **ENDEREÇO** |
+|---|---|---|
+| Frutas Importadas | 10 | Avenida Sete de Setembro e Adjacências |
+| Sete Portas | 33 | Avenida Sete de Setembro e Adjacências |
+| Jardim Cruzeiro | 117 | Rua Rezende Costa |
+| São Joaquim | 7.500 | Avenida Oscar Pontes |
+| Fazendo Grande do Retiro | 27 | Rua Melo Morais Filho |
+| Largo do Tanque | 41 | Avenida San Martin |
+| São Caetano | 18 | Rua Desembargador Mário Lisboa Sampaio |
+| IAPI | 10 | Rua Conde de Porto Alegre |
+| Japão / Liberdade | 269 | Rua Gonçalo Coelho |
+| Cosme de Farias | 150 | Rua Wenceslau Galo |
+| Cruz da Redenção | 07 | Ladeira do Mulambu |
+| Nordeste de Amaralina | 41 | Rua Reinaldo de Matos – Final de Linha |
+| Vale das Pedrinhas | 15 | Rua Antônio Balbino |
+| Mussurunga | 62 | Rua C, Quadra B |
+| São Cristóvão | 50 | Praça da Matriz |
+| Tancredo Neves | 50 | Rua Pernambuco / Rua Paraíba |
+| Dom Avelar | 25 | Largo dos Oratorianos |
+| Cajazeiras | 59 | Rotula da 2ª Etapa – Cajazeiras X |
+| Castelo Branco | 60 | Rua A / D |
+| Valéria | 40 | Rua da Matriz / PÇ N. Senhora da Conceição |
+| Fazenda Coustos | 144 | Rua 60, Quadra 59 – Final de Linha |
+| Periperi | 120 | Rua das Pedrinhas |
+| Plataforma | 11 | Rua Antônio Balbino |

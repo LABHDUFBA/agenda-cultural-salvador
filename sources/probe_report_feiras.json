@@ -1,0 +1,56 @@
+{
+  "gerado_em": "2026-11-03T07:38:30-03:00",
+  "observacao": "Sondagem ao vivo das fontes de feiras. Fonte bloqueada/indisponível continua no catálogo: o conteúdo citado está preservado em sources/feiras/.",
+  "resultados": [
+    {
+      "chave": "semop",
+      "url": "https://ordempublica.salvador.ba.gov.br/solicitacoes-e-localizacoes-de-feiras/",
+      "acessivel": false,
+      "status": null,
+      "tamanho": null,
+      "erro": "FonteIndisponivel",
+      "snapshot": "semop_localizacoes.txt",
+      "acessibilidade_declarada": "bloqueada"
+    },
+    {
+      "chave": "senac",
+      "url": "http://observatoriogastronomico.senac.br/mercados_feiras/feiras-livres-fixas-de-alimentos-nao-organicos-em-salvador/",
+      "acessivel": false,
+      "status": null,
+      "tamanho": null,
+      "erro": "FonteIndisponivel",
+      "snapshot": "senac_observatorio.txt",
+      "acessibilidade_declarada": "indisponivel"
+    },
+    {
+      "chave": "visit",
+      "url": "https://www.salvadordabahia.com/feiras-e-mercados-de-salvador-lista-completa-funcionamento-e-informacoes-gerais/",
+      "acessivel": true,
+      "status": 200,
+      "tamanho": 160069,
+      "erro": null,
+      "snapshot": "visit_salvador.txt",
+      "acessibilidade_declarada": "ok"
+    },
+    {
+      "chave": "pelourinho",
+      "url": "https://pelourinhodiaenoite.salvador.ba.gov.br/feira-de-artesanato-2/",
+      "acessivel": false,
+      "status": null,
+      "tamanho": null,
+      "erro": "FonteIndisponivel",
+      "snapshot": "pelourinho_artesanato.txt",
+      "acessibilidade_declarada": "bloqueada"
+    },
+    {
+      "chave": "acm",
+      "url": "https://www.institutoacm.com.br/projetos/feira-da-se/",
+      "acessivel": true,
+      "status": 200,
+      "tamanho": 84522,
+      "erro": null,
+      "snapshot": "instituto_acm.txt",
+      "acessibilidade_declarada": "ok"
+    }
+  ]
+}

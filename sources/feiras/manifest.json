@@ -1,0 +1,44 @@
+{
+  "semop_localizacoes": {
+    "url": "https://ordempublica.salvador.ba.gov.br/solicitacoes-e-localizacoes-de-feiras/",
+    "arquivo": "semop_localizacoes.txt",
+    "sha256": "ce55094706fa8fb007644bc5e7669e37ef9e0f7453fa614c70c32c3f5a321b67",
+    "bytes": 1345,
+    "capturado_em": "2026-11-03"
+  },
+  "semop_feiras_mercados": {
+    "url": "https://ordempublica.salvador.ba.gov.br/feiras-e-mercados/",
+    "arquivo": "semop_feiras_mercados.txt",
+    "sha256": "06c4be805262067247c6fb110745c5fd391c727133dc0eb15e15184b2f5d2bcd",
+    "bytes": 1734,
+    "capturado_em": "2026-11-03"
+  },
+  "senac_observatorio": {
+    "url": "http://observatoriogastronomico.senac.br/mercados_feiras/feiras-livres-fixas-de-alimentos-nao-organicos-em-salvador/",
+    "arquivo": "senac_observatorio.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "capturado_em": "2026-11-03"
+  },
+  "visit_salvador": {
+    "url": "https://www.salvadordabahia.com/feiras-e-mercados-de-salvador-lista-completa-funcionamento-e-informacoes-gerais/",
+    "arquivo": "visit_salvador.txt",
+    "sha256": "98dde78efd5b67d9f155eaad6e197e70692122f625c9cdd2afc579d690e8fcdb",
+    "bytes": 16664,
+    "capturado_em": "2026-11-03"
+  },
+  "pelourinho_artesanato": {
+    "url": "https://pelourinhodiaenoite.salvador.ba.gov.br/feira-de-artesanato-2/",
+    "arquivo": "pelourinho_artesanato.txt",
+    "sha256": "9d03acd5a79a85aff2f98960c9d46798ad290f3b0049c37e9e72e64438d3a15a",
+    "bytes": 357,
+    "capturado_em": "2026-11-03"
+  },
+  "instituto_acm": {
+    "url": "https://www.institutoacm.com.br/projetos/feira-da-se/",
+    "arquivo": "instituto_acm.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "capturado_em": "2026-11-03"
+  }
+}

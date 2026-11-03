@@ -1,0 +1,146 @@
+# Agenda Cultural Salvador — pilha de execução.
+#
+#   cp .env.example .env      # preencha BOT_TOKEN/TARGET_CHAT_ID só no servidor
+#   docker compose config     # valida sintaxe SEM precisar de .env nem daemon
+#   docker compose up -d      # bot + agendador
+#
+# Sem `.env` o compose continua válido (env_file opcional) e a pilha sobe em
+# modo seguro: BOT_TOKEN vazio faz o bot sair com código 2 e a publicação fica
+# bloqueada. Para operar de verdade, o .env é obrigatório.
+#
+# Notas de arquitetura:
+#   * Não há porta publicada: o bot usa long-polling (saída HTTPS apenas).
+#   * Dois processos compartilham o MESMO volume de dados porque o SQLite é
+#     local (WAL).  Não escale `bot` para mais de uma réplica: o throttle de
+#     publicação é em memória e dois processos podem furar o intervalo mínimo.
+#   * Todo estado vive em volumes nomeados; derrubar/re criar container não
+#     perde dados nem backups.
+#   * Credenciais só via .env (nunca em imagem, nunca no compose).
+
+name: agenda-cultural-salvador
+
+x-common: &common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: agenda-cultural-salvador:local
+  init: true
+  # `.env` é OPCIONAL (Compose >= 2.24): sem o arquivo a pilha ainda valida em
+  # `docker compose config` e sobe em modo seguro — token vazio faz o bot sair
+  # com código 2 (fail-closed) e a publicação continua bloqueada por
+  # AGENDA_ALLOW_EXECUTE=0. Em produção, crie o .env antes do `up`.
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    # Sobrepõem o .env: dentro do container os caminhos são absolutos.
+    TZ: ${TZ:-America/Bahia}
+    AGENDA_DB: /app/data/agenda.db
+    AGENDA_BACKUP_DIR: /app/backups
+    AGENDA_SCHEDULE: /app/config/schedule.json
+    AGENDA_SCHEDULER_STATE: /app/data/scheduler_state.json
+    # Segredos: só REFERÊNCIA (`${VAR:-}`), nunca valor literal. Vazios quando
+    # não há .env — o bot não inicia sem token, o que é o comportamento seguro.
+    BOT_TOKEN: ${BOT_TOKEN:-}
+    TARGET_CHAT_ID: ${TARGET_CHAT_ID:-}
+    ADMIN_IDS: ${ADMIN_IDS:-}
+    TELEGRAM_API_BASE: ${TELEGRAM_API_BASE:-https://api.telegram.org}
+    # Travas de publicação: desligadas por padrão.
+    AGENDA_ALLOW_EXECUTE: ${AGENDA_ALLOW_EXECUTE:-0}
+    AGENDA_MAX_PER_RUN: ${AGENDA_MAX_PER_RUN:-3}
+    AGENDA_MIN_INTERVAL: ${AGENDA_MIN_INTERVAL:-300}
+    # Operação: retenção de backup e nível de log.
+    AGENDA_BACKUP_KEEP: ${AGENDA_BACKUP_KEEP:-14}
+    AGENDA_BACKUP_VERIFY: ${AGENDA_BACKUP_VERIFY:-1}
+    AGENDA_LOG_LEVEL: ${AGENDA_LOG_LEVEL:-INFO}
+  volumes:
+    - agenda-data:/app/data
+    - agenda-backups:/app/backups
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  bot:
+    <<: *common
+    container_name: agenda-bot
+    command: ["python", "-m", "bot.app"]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    # Endurecimento: sem escalada, sem capabilities, FS raiz somente leitura.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    healthcheck:
+      test: ["CMD", "python", "scripts/healthcheck.py", "--quiet"]
+      interval: 60s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 384M
+
+  scheduler:
+    <<: *common
+    container_name: agenda-scheduler
+    command: ["python", "scripts/scheduler.py"]
+    restart: unless-stopped
+    stop_grace_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    healthcheck:
+      test: ["CMD", "python", "scripts/healthcheck.py", "--scheduler", "--quiet"]
+      interval: 120s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  # CLI administrativo: não fica de pé, roda sob demanda.
+  #   docker compose run --rm admin events --status pending_review
+  #   docker compose run --rm admin publish 7 --actor 123456789   # dry-run
+  admin:
+    <<: *common
+    profiles: ["tools"]
+    entrypoint: ["python", "-m", "bot.admin"]
+    command: ["--help"]
+    restart: "no"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+
+  # Backup avulso (o agendador já faz o diário):
+  #   docker compose run --rm --profile tools backup create
+  backup:
+    <<: *common
+    profiles: ["tools"]
+    entrypoint: ["python", "scripts/backup.py"]
+    command: ["create"]
+    restart: "no"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+
+volumes:
+  agenda-data:
+    name: agenda-cultural-data
+  agenda-backups:
+    name: agenda-cultural-backups

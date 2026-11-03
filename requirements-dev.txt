@@ -1,0 +1,8 @@
+# Dependências de desenvolvimento, teste e CI.  Não vão para a imagem.
+#
+# pytest: suíte do projeto (tests/) e testes de implantação (tests/deploy/).
+# PyYAML: leitura de docker-compose.yml nos testes de implantação; o runtime
+#         nunca importa YAML — a configuração de agendamento é JSON.
+-r requirements.txt
+pytest==8.3.4
+PyYAML==6.0.2

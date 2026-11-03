@@ -1,0 +1,75 @@
+{
+  "gerado_em": "2026-11-03T10:49:56+00:00",
+  "politica": {
+    "user_agent": "AgendaCulturalSalvadorBot/1.0",
+    "robots": "respeitado",
+    "retry": "nenhum",
+    "contorno": "nenhum (sem proxy, sem troca de UA, sem desativar TLS)"
+  },
+  "resumo": {
+    "total": 5,
+    "acessiveis": 4,
+    "bloqueadas": 0,
+    "indisponiveis": 1
+  },
+  "resultados": [
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "tamanho": 48200,
+      "duracao_s": 21.188,
+      "robots": "permitido",
+      "fonte_id": "ufba_agenda",
+      "nome": "Agenda UFBA — Portal de eventos",
+      "tipo_conteudo": "cartoes_html",
+      "observacao": "HTTP 200, 47.941 bytes, robots.txt `Allow: /` (2026-11-03). View Drupal renderizada no servidor em `table.views-table`: categoria, título/URL, data (`dd/mm/aaaa - HhMM`, às vezes com fim), local e descrição em parágrafos com classe própria. O coletor `ufba_agenda_tabela` extrai 8 linhas, todas futuras ou em curso na sondagem. A hora é a publicada pelo editor (inclusive valores de preenchimento como 8h08); nada é arredondado."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "tamanho": 366161,
+      "duracao_s": 1.692,
+      "robots": "permitido",
+      "fonte_id": "ufba_escola_teatro",
+      "nome": "Escola de Teatro da UFBA — Agenda",
+      "tipo_conteudo": "calendario_json",
+      "observacao": "HTTP 200, 366.161 bytes, robots.txt `Allow: /` (2026-11-03). Next.js: `props.pageProps.agenda` traz uid, título, subtítulo, local, tipo e `date` ISO com offset. O coletor `ufba_teatro_json` lê 63 registros e converte UTC para America/Bahia. Na sondagem o registro mais recente era 31/03/2026: **não havia evento futuro publicado**, então a cobertura ativa hoje é zero — ausência na fonte, não falha."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 299504,
+      "duracao_s": 1.918,
+      "robots": "permitido",
+      "fonte_id": "cine_glauber_rocha",
+      "nome": "Cine Glauber Rocha — Programação",
+      "tipo_conteudo": "cartoes_html",
+      "observacao": "HTTP 200, 299.504 bytes, robots.txt `Allow` (Disallow só para lightbox/admin) em 2026-11-03. HTML renderizado no servidor: 48 `div.filme`, 57 `div.sala-filme`. Cada sessão publica a frase acessível 'ingresso para <filme>, sessão de dd/mm/aaaa às HH:MM, sala N' — dela saem data, hora e sala, sem inferência. O link de compra (tikt.com.br) entra como `url_ingresso`; a página do filme é a proveniência."
+    },
+    {
+      "erro": "FonteIndisponivel",
+      "mensagem": "não foi possível alcançar https://agenda.ufba.br/: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1082)",
+      "fonte_id": "agenda_ufba_portal",
+      "url": "https://agenda.ufba.br/",
+      "acessivel": false,
+      "nome": "Agenda UFBA — Portal de eventos (agenda.ufba.br)",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "Certificado válido para `*.agenda.ufba.br` (GlobalSign) mas o servidor não envia o intermediário `GlobalSign RSA OV SSL CA 2018`: a verificação falha com 'unable to verify the first certificate' (openssl, 2026-11-03). O projeto não desativa verificação de TLS nem fixa CA no código; a fonte fica registrada como indisponível até o servidor corrigir a cadeia. O conteúdo equivalente é coletado de `ufba.br/agenda-ufba`."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 117964,
+      "duracao_s": 2.179,
+      "robots": "permitido",
+      "fonte_id": "agenda_arte_cultura",
+      "nome": "Agenda Arte e Cultura — agenda da Universidade e de Salvador",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "HTTP 200, 117.964 bytes, robots.txt permite (só /cgi-bin e /wusage vedados) em 2026-11-03. WordPress com matérias por linguagem (artes visuais, audiovisual, dança, música, teatro) e menu de equipamentos culturais da UFBA. **Não** publica data de evento em campo estruturado: as tags <time> trazem a data de publicação da matéria e a data do evento só aparece no texto corrido. Sem parser: converter publicação em data de evento seria inventar. Fonte útil para pauta, não para coleta."
+    }
+  ]
+}

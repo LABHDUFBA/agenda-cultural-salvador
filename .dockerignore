@@ -1,0 +1,37 @@
+# Arquivos que não entram no contexto de build da imagem.
+
+.git
+.gitignore
+.github
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+coverage
+.coverage*
+htmlcov
+
+# Nunca empacotar segredos ou dados locais.
+.env
+.env.*
+!.env.example
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.json
+backups/
+*.db
+*.db.gz
+
+# Documentação e editor
+*.md
+!README.md
+docs/
+.DS_Store
+.vscode
+.idea

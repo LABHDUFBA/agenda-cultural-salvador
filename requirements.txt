@@ -1,0 +1,14 @@
+# Dependências de execução (runtime).
+#
+# O runtime do Agenda Cultural Salvador é escrito apenas com a biblioteca
+# padrão do Python: sqlite3, urllib, json, zoneinfo.  Este arquivo existe
+# para que a imagem Docker e o ambiente de produção tenham um único ponto
+# de instalação caso uma dependência de runtime seja realmente necessária.
+#
+# Regras:
+#   * toda dependência adicionada aqui precisa de versão fixa (==);
+#   * dependência usada só em teste/CI vai em requirements-dev.txt;
+#   * nada entra na imagem sem passar pelo build de CI (.github/workflows/ci.yml).
+#
+# Mantido vazio de propósito: `pip install -r requirements.txt` é um no-op
+# válido e mantém Dockerfile e produção idênticos.

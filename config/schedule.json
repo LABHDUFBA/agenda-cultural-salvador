@@ -1,0 +1,88 @@
+{
+  "timezone": "America/Bahia",
+  "jobs": [
+    {
+      "name": "backup-diario",
+      "task": "backup",
+      "at": "03:15",
+      "enabled": true,
+      "args": {
+        "keep": 14,
+        "verify": true
+      },
+      "description": "Cópia online do SQLite (sqlite3 .backup) com verificação de integridade, gzip e retenção de 14 dias."
+    },
+    {
+      "name": "integridade-banco",
+      "task": "integrity",
+      "at": "03:50",
+      "enabled": true,
+      "description": "PRAGMA quick_check + checagem de versão do schema; registra contagem de eventos por status."
+    },
+    {
+      "name": "coleta-06h",
+      "task": "coleta",
+      "at": "06:00",
+      "enabled": true,
+      "args": {
+        "limite": 50,
+        "gravar": true
+      },
+      "description": "Rotina solicitada 06h: coleta todas as fontes coletáveis do catálogo e grava como pendente/rejeitado (nunca publica). Única tarefa agendada com rede."
+    },
+    {
+      "name": "coleta-12h",
+      "task": "coleta",
+      "at": "12:00",
+      "enabled": true,
+      "args": {
+        "limite": 50,
+        "gravar": true
+      },
+      "description": "Rotina solicitada 12h: mesma coleta em lote, sempre pendente/rejeitado."
+    },
+    {
+      "name": "coleta-17h",
+      "task": "coleta",
+      "at": "17:00",
+      "enabled": true,
+      "args": {
+        "limite": 50,
+        "gravar": true
+      },
+      "description": "Rotina solicitada 17h: mesma coleta em lote, sempre pendente/rejeitado."
+    },
+    {
+      "name": "coleta-22h",
+      "task": "coleta",
+      "at": "22:00",
+      "enabled": true,
+      "args": {
+        "limite": 50,
+        "gravar": true
+      },
+      "description": "Rotina solicitada 22h: mesma coleta em lote, sempre pendente/rejeitado."
+    },
+    {
+      "name": "relatorio-pendentes",
+      "task": "pending_report",
+      "at": "08:00",
+      "enabled": true,
+      "args": {
+        "limit": 20
+      },
+      "description": "Relatório offline de eventos aguardando autorização/aprovação. Não envia nada, não usa rede. O limite corta as linhas registradas no log."
+    },
+    {
+      "name": "janela-publicacao-07h",
+      "task": "publish",
+      "at": "07:00",
+      "days": [
+        "thu",
+        "sun"
+      ],
+      "enabled": false,
+      "description": "Janela editorial solicitada: quinta e domingo, 07:00 America/Bahia. DECLARAÇÃO apenas — o agendador nunca publica; publicação é comando humano com autorização e frase de confirmação."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Banco e estado local (o volume Docker é a fonte de verdade em produção)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.json
+
+# Backups locais (scripts/backup.py) — grandes e com dados pessoais
+backups/
+*.db.gz
+*.db.gz.sha256
+
+# Credenciais: só o modelo é versionado
+.env
+.env.*
+!.env.example

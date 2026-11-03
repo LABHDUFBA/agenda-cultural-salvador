@@ -1,0 +1,151 @@
+{
+  "gerado_em": "2026-11-03T10:06:11+00:00",
+  "resultados": [
+    {
+      "erro": "FonteIndisponivel",
+      "mensagem": "não foi possível alcançar https://pelourinhodiaenoite.salvador.ba.gov.br/agenda-completa/: timed out",
+      "fonte_id": "pelourinho_dia_noite",
+      "url": "https://pelourinhodiaenoite.salvador.ba.gov.br/agenda-completa/",
+      "acessivel": false,
+      "nome": "Pelourinho Dia e Noite — Agenda Completa",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "DNS resolve (177.20.74.10) mas o TCP não completa a partir desta rede: timeout de 25 s sem SYN-ACK. Bloqueio de rede, não de conteúdo. Nenhuma tentativa de contorno (proxy/espelho) é feita."
+    },
+    {
+      "erro": "FonteIndisponivel",
+      "mensagem": "não foi possível alcançar https://secult.salvador.ba.gov.br/: timed out",
+      "fonte_id": "secult_salvador",
+      "url": "https://secult.salvador.ba.gov.br/",
+      "acessivel": false,
+      "nome": "SECULT Salvador — Secretaria de Cultura e Turismo",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "Mesma faixa 177.20.74.0/24 do Pelourinho: TCP filtrado a partir desta rede. Conteúdo visto apenas por índice de terceiros; não é usado como substituto da fonte."
+    },
+    {
+      "erro": "FonteIndisponivel",
+      "mensagem": "não foi possível alcançar https://www.salvador.ba.gov.br/: timed out",
+      "fonte_id": "prefeitura_salvador",
+      "url": "https://www.salvador.ba.gov.br/",
+      "acessivel": false,
+      "nome": "Prefeitura de Salvador — Portal",
+      "tipo_conteudo": "portal",
+      "observacao": "Host 177.20.65.15: TCP filtrado a partir desta rede (timeout). Sem coleta até haver rota legítima de rede (ex.: execução no próprio datacenter municipal)."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 144038,
+      "duracao_s": 1.603,
+      "robots": "permitido",
+      "fonte_id": "tca",
+      "nome": "Teatro Castro Alves — Calendário de Eventos",
+      "tipo_conteudo": "calendario_json",
+      "observacao": "Drupal 10. O FullCalendar recebe os eventos embutidos em drupalSettings (title, url, start, end): extração determinística, sem executar JS. 171 eventos na sondagem de 2026-11-03."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 63944,
+      "duracao_s": 1.057,
+      "robots": "permitido",
+      "fonte_id": "funceb",
+      "nome": "FUNCEB — Calendário de Eventos",
+      "tipo_conteudo": "calendario_json",
+      "observacao": "Mesmo tema Drupal do TCA; calendário com 1 evento na sondagem. A fundação publica a maior parte da programação em notícias, que não são tratadas aqui como evento."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 111630,
+      "duracao_s": 1.148,
+      "robots": "permitido",
+      "fonte_id": "secult_ba",
+      "nome": "SECULT-BA — Eventos",
+      "tipo_conteudo": "calendario_json",
+      "observacao": "Calendário existe e responde 200, mas veio vazio (0 eventos) na sondagem. Coleta válida com resultado zero — não é falha."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 75224,
+      "duracao_s": 1.039,
+      "robots": "permitido",
+      "fonte_id": "ipac",
+      "nome": "IPAC — Eventos",
+      "tipo_conteudo": "calendario_json",
+      "observacao": "Calendário responde 200 e veio vazio na sondagem. Museus do IPAC divulgam programação em notícias; não convertidas em evento."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 448449,
+      "duracao_s": 2.755,
+      "robots": "permitido",
+      "fonte_id": "teatro_vila_velha",
+      "nome": "Teatro Vila Velha — Agenda Mensal",
+      "tipo_conteudo": "agenda_texto",
+      "observacao": "Agenda publicada como post WordPress em texto corrido ('TÍTULO - 12 de agosto - 19h - LOCAL'). Sem hora de término e com ano implícito no cabeçalho do mês (ex.: 'agosto/26'). Toda coleta daqui entra como baixa confiança e revisão obrigatória."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "tamanho": 152828,
+      "duracao_s": 1.585,
+      "robots": "permitido",
+      "fonte_id": "salvador_da_bahia",
+      "nome": "Salvador da Bahia — Agenda do dia",
+      "tipo_conteudo": "cartoes_html",
+      "observacao": "WordPress + Yoast. Cartões com data no cabeçalho do dia ('03 de Novembro de 2026') e hora não publicada: o evento entra à meia-noite (America/Bahia) com revisão obrigatória."
+    },
+    {
+      "erro": "FonteBloqueada",
+      "mensagem": "fonte recusou acesso: HTTP 403 em https://www.caixacultural.gov.br/",
+      "fonte_id": "caixa_cultural_salvador",
+      "url": "https://www.caixacultural.gov.br/",
+      "acessivel": false,
+      "status": 403,
+      "nome": "Caixa Cultural Salvador — Programação",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "HTTP 403 imediato para o agente identificado (WAF). Sem retry com outro User-Agent, sem navegador headless: bloqueio respeitado."
+    },
+    {
+      "erro": "FonteIndisponivel",
+      "mensagem": "não foi possível alcançar https://www.mam.ba.gov.br/: timed out",
+      "fonte_id": "mam_bahia",
+      "url": "https://www.mam.ba.gov.br/",
+      "acessivel": false,
+      "nome": "MAM Bahia — Museu de Arte Moderna da Bahia",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "DNS não resolve (NXDOMAIN) e conexão não abre. Domínio institucional sem registro ativo; registrar e monitorar."
+    },
+    {
+      "erro": "FonteBloqueada",
+      "mensagem": "fonte recusou acesso: HTTP 403 em https://www.muncab.com.br/",
+      "fonte_id": "muncab",
+      "url": "https://www.muncab.com.br/",
+      "acessivel": false,
+      "status": 403,
+      "nome": "MUNCAB — Museu Nacional da Cultura Afro-Brasileira",
+      "tipo_conteudo": "agenda_html",
+      "observacao": "HTTP 403 para requisição identificada. Bloqueio respeitado; sem tentativa de contorno."
+    },
+    {
+      "acessivel": true,
+      "status": 200,
+      "content_type": "text/html",
+      "tamanho": 10797,
+      "duracao_s": 0.983,
+      "robots": "permitido",
+      "fonte_id": "sesc_bahia",
+      "nome": "SESC Bahia — Programação cultural",
+      "tipo_conteudo": "app_javascript",
+      "observacao": "SPA Angular: o HTML entregue tem 10 KB e nenhum evento; os dados vêm de uma API interna não documentada (sescbahia.azurewebsites.net/gerenciador/api). Não fazemos engenharia reversa de API privada: fonte fica registrada e pendente de API pública/calendário servido no HTML."
+    }
+  ]
+}
