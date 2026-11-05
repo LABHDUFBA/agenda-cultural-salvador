@@ -32,12 +32,19 @@ from .permissions import PermissionService
 from .publisher import CONFIRMATION_PHRASE, Publisher
 from .telegram_api import IncomingUpdate, OutgoingMessage
 
-HELP_PUBLIC = """Agenda Cultural Salvador
+HELP_PUBLIC = """Agenda Cultural Salvador — LABHDUFBA
 
+O que eu faço: reúno eventos de cultura de Salvador (teatro, música, cinema, exposições, feiras e mais) coletados de fontes oficiais, e entrego a você com data, hora, local e link para mais informações.
+
+📅 Consultar:
 /hoje — eventos de hoje
 /amanha — eventos de amanhã
 /semana — próximos 7 dias
 /fimdesemana — sábado e domingo
+/mes — programação do mês
+/agenda — próximos eventos publicados
+
+🎯 Filtrar:
 /gratis — eventos gratuitos (30 dias)
 /musica — música
 /teatro — teatro
@@ -46,12 +53,17 @@ HELP_PUBLIC = """Agenda Cultural Salvador
 /noite — a partir das 18h
 /ufba — eventos na UFBA
 /bairro [nome] — por bairro (sem nome: lista os bairros)
-/fontes — fontes do catálogo
+/buscar termo — procura por título, local ou descrição
+
+feira:
 /feiras [dia|bairro] — feiras livres e culturais (sem argumento: hoje)
 /feira SLUG — ficha da feira com a fonte citada
-/evento ID — detalhes de um evento
-/buscar termo — procura por título, local ou descrição
-/ajuda — esta mensagem"""
+
+ℹ️ Outros:
+/fontes — fontes do catálogo
+/ajuda — esta mensagem
+
+Cada evento vem com data, hora, local e link — é só tocar no link para saber mais."""
 
 
 HELP_EDITOR = """
@@ -80,7 +92,7 @@ COMMANDS = {
     "start", "ajuda", "help", "agenda", "evento", "buscar", "novo", "meus",
     "pendentes", "aprovar", "rejeitar", "autorizar", "publicar", "lote",
     "auditoria", "status", "usuarios", "papel",
-    "hoje", "amanha", "semana", "fimdesemana", "gratis", "musica", "teatro",
+    "hoje", "amanha", "semana", "fimdesemana", "mes", "gratis", "musica", "teatro",
     "cinema", "exposicoes", "noite", "ufba", "bairro", "fontes", "atualizar",
     "corrigir", "duplicados", "feiras", "feira",
 }
@@ -208,12 +220,67 @@ def _event_line(event: Event, index: Optional[int] = None) -> str:
     return f"{prefix}#{event.id} {fmt_when(event.starts_at)} — {event.title} ({event.venue}){extra}"
 
 
+def _event_link(event: Event) -> str:
+    """O 'link para mais informações' — ingresso se houver, senão a fonte."""
+    return event.url_ingresso or event.source_url
+
+
 def _limitar(texto: str, limite: int = 3800) -> str:
     """Corta em linha inteira para não estourar o limite de 4096 do Telegram."""
     if len(texto) <= limite:
         return texto
     corte = texto[:limite].rsplit("\n", 1)[0]
     return corte + "\n… (lista truncada; refine com /feiras bairro NOME)"
+
+
+def _event_ficha(event: Event, index: Optional[int] = None) -> str:
+    """Bloco de evento para listas públicas: data/hora pronta + link."""
+    prefix = f"{index}. " if index is not None else ""
+    linhas = [f"{prefix}🎭 {event.title}"]
+    when = fmt_when(event.starts_at)
+    if event.ends_at and not event.ends_at.startswith(event.starts_at[:10]):
+        when += f" até {fmt_when(event.ends_at)}"
+    elif event.ends_at:
+        when += f" – {fmt_when(event.ends_at).split(' ', 1)[-1]}"
+    detalhe = f"📅 {when}"
+    if event.preco:
+        detalhe += f" · {event.preco[:60]}"
+    linhas.append(detalhe)
+    local = event.venue or event.endereco
+    if local:
+        linhas.append(f"📍 {local}")
+    elif event.bairro:
+        linhas.append(f"📍 {event.bairro}")
+    link = _event_link(event)
+    if link:
+        linhas.append(f"🔗 {link}")
+    return "\n".join(linhas)
+
+
+def _eventos_em_blocos(chat_id: int, titulo: str, eventos: list[Event],
+                       rodape: str = "") -> list[OutgoingMessage]:
+    """Renderiza eventos como blocos de ficha com link, respeitando 4096 chars.
+
+    Cada evento vira um bloco com data/hora, local e o link de mais
+    informações — a conversa inteira funciona sem o usuário digitar ID.
+    """
+    blocos = [_event_ficha(e, i) for i, e in enumerate(eventos, 1)]
+    mensagens: list[str] = []
+    atual = titulo
+    for bloco in blocos:
+        if len(atual) + 1 + len(bloco) > 3800 and atual != titulo:
+            mensagens.append(atual)
+            atual = ""
+        atual = f"{atual}\n\n{bloco}".strip()
+    if rodape:
+        rodape_txt = f"\n\n{rodape}"
+        if len(atual) + len(rodape_txt) > 3800:
+            mensagens.append(atual)
+            atual = ""
+        atual += rodape_txt
+    if atual:
+        mensagens.append(atual)
+    return [OutgoingMessage(chat_id, m) for m in mensagens]
 
 
 def _feira_line(feira, index: Optional[int] = None) -> str:
@@ -359,17 +426,34 @@ class BotHandlers:
     # -- public commands --------------------------------------------------
     def cmd_start(self, chat_id: int, user_id, args: str):
         role = self.ctx.role(user_id)
-        text = HELP_PUBLIC
+        hoje = hoje_local()
+        boas_vindas = (
+            "Bem-vindo(a) à Agenda Cultural de Salvador! 🎭\n\n"
+            "Eu sou um projeto do LABHDUFBA — Laboratório de Humanidades Digitais da UFBA. "
+            "Recolho a programação cultural de Salvador direto das fontes oficiais "
+            "(Teatro Castro Alves, UFBA, Bilheteria Digital, Sympla e outras), "
+            "organizo e entrego pra você — sem precisar procurar em vários sites.\n\n"
+            "É simples: cada evento vem com data, hora, local e um link para mais "
+            "informações. Você não precisa digitar nada além dos comandos abaixo.\n\n"
+            f"📅 **Hoje · {hoje.strftime('%d/%m')}**\n"
+        )
+        eventos_hoje = self._publicos(de=hoje, ate=hoje)
+        if eventos_hoje:
+            fichas = "\n\n".join(_event_ficha(e, i) for i, e in enumerate(eventos_hoje, 1))
+            boas_vindas += fichas
+        else:
+            boas_vindas += "Ainda sem eventos aprovados para hoje — veja /semana ou /mes."
+        mensagens = [OutgoingMessage(chat_id, boas_vindas)]
+        comandos = HELP_PUBLIC
         if role.rank >= UserRole.EDITOR.rank:
-            text += HELP_EDITOR
+            comandos += HELP_EDITOR
         if role is UserRole.ADMIN:
-            text += HELP_ADMIN
-        return [OutgoingMessage(chat_id, text)]
+            comandos += HELP_ADMIN
+        mensagens.append(OutgoingMessage(chat_id, comandos))
+        return mensagens
 
     def cmd_ajuda(self, chat_id: int, user_id, args: str):
         return self.cmd_start(chat_id, user_id, args)
-
-    cmd_help = cmd_ajuda
 
     def cmd_agenda(self, chat_id: int, user_id, args: str):
         limit = 8
@@ -378,10 +462,7 @@ class BotHandlers:
         events = self.ctx.events.list_upcoming(limit=limit)
         if not events:
             return [OutgoingMessage(chat_id, "Nenhum evento aprovado no momento.")]
-        lines = ["Próximos eventos", ""]
-        lines += [_event_line(e, i) for i, e in enumerate(events, 1)]
-        lines += ["", "Detalhes: /evento ID"]
-        return [OutgoingMessage(chat_id, "\n".join(lines))]
+        return _eventos_em_blocos(chat_id, "Próximos eventos", events)
 
     def cmd_evento(self, chat_id: int, user_id, args: str):
         event_id = _as_int(args)
@@ -438,15 +519,11 @@ class BotHandlers:
         titulo: str,
         eventos: list[Event],
         vazio: str,
-        dica: str = "Detalhes: /evento ID",
-    ):
+        dica: str = "",
+    ) -> list[OutgoingMessage]:
         if not eventos:
             return [OutgoingMessage(chat_id, vazio)]
-        lines = [titulo, ""]
-        lines += [_event_line(e, i) for i, e in enumerate(eventos, 1)]
-        if dica:
-            lines += ["", dica]
-        return [OutgoingMessage(chat_id, "\n".join(lines))]
+        return _eventos_em_blocos(chat_id, titulo, eventos, rodape=dica)
 
     def _por_chave(self, chave: str, dias: int = 60) -> list[Event]:
         candidatos = self._publicos(de=hoje_local(),
@@ -479,6 +556,27 @@ class BotHandlers:
         return self._lista(chat_id, f"Fim de semana · {fmt_dia(sabado)} e {fmt_dia(domingo)}",
                            eventos, "Nenhum evento aprovado para o fim de semana.")
 
+    def cmd_mes(self, chat_id: int, user_id, args: str):
+        """Programação do mês corrente — o 'this month' que faltava."""
+        base = hoje_local()
+        if args.strip():
+            try:
+                alvo = datetime.strptime(args.strip(), "%Y-%m").date()
+            except ValueError:
+                return [OutgoingMessage(chat_id,
+                        "Formato: /mes AAAA-MM (ex.: /mes 2026-11).")]
+        else:
+            alvo = base.replace(day=1)
+        fim = (alvo.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        eventos = self._publicos(de=max(alvo, base), ate=fim, limite=300)
+        titulo = (f"Programação de {alvo.strftime('%B de %Y').capitalize()}"
+                  if alvo.month != base.month or alvo.year != base.year
+                  else f"Programação do mês · {fmt_dia(base)} a {fim.strftime('%d/%m')}")
+        if alvo < base.replace(day=1):
+            return [OutgoingMessage(chat_id, "Mês encerrado — consulte /semana ou /mes AAAA-MM futuro.")]
+        return self._lista(chat_id, titulo, eventos,
+                           "Nenhum evento aprovado neste mês ainda. Veja /semana.")
+
     def cmd_gratis(self, chat_id: int, user_id, args: str):
         hoje = hoje_local()
         candidatos = self._publicos(de=hoje, ate=hoje + timedelta(days=30), limite=300)
@@ -487,7 +585,7 @@ class BotHandlers:
             chat_id, "Eventos gratuitos — próximos 30 dias", eventos,
             "Nenhum evento marcado como gratuito nos próximos 30 dias.\n"
             "Só entram eventos cujo campo de preço na fonte diz gratuito/entrada franca.",
-            dica="Gratuidade conforme a fonte; confirme no link do evento. Detalhes: /evento ID",
+            dica="Gratuidade conforme a fonte; confirme no link do evento.",
         )
 
     def cmd_musica(self, chat_id: int, user_id, args: str):

@@ -94,7 +94,7 @@ def test_hoje_so_lista_aprovados_de_hoje(runtime):
     assert "Hoje Aprovado" in texto
     assert "Hoje Pendente" not in texto
     assert "Amanhã" not in texto
-    assert f"#{hoje.id}" in texto
+    assert "Hoje Aprovado" in texto and "🔗 https://exemplo.org/evento" in texto
 
 
 def test_amanha_nao_inclui_hoje_nem_depois_de_amanha(runtime):
@@ -104,7 +104,7 @@ def test_amanha_nao_inclui_hoje_nem_depois_de_amanha(runtime):
 
     texto = say(runtime, "/amanha")
     assert "Evento de Amanhã" in texto
-    assert f"#{amanha.id}" in texto
+    assert "Evento de Amanhã" in texto
     assert "Evento de Hoje" not in texto
     assert "Evento Depois" not in texto
 
@@ -128,7 +128,8 @@ def test_fimdesemana_pega_sabado_e_domingo(runtime):
     add_event(runtime, dias=dias_ate_sabado + 2, hora="11:00", titulo="Segunda Show")
 
     texto = say(runtime, "/fimdesemana")
-    assert f"#{sabado.id}" in texto and f"#{domingo.id}" in texto
+    assert "Sábado Show" in texto and "Domingo Show" in texto
+    assert "Segunda Show" not in texto
     assert "Segunda Show" not in texto
 
 
@@ -140,7 +141,7 @@ def test_gratis_usa_apenas_preco_declarado(runtime):
     add_event(runtime, dias=6, titulo="Preço Desconhecido", preco="")
 
     texto = say(runtime, "/gratis")
-    assert f"#{franca.id}" in texto and f"#{zero.id}" in texto
+    assert "Entrada Franca" in texto and "Zero Reais" in texto
     assert "Pago" not in texto
     assert "Preço Desconhecido" not in texto
 
@@ -157,13 +158,14 @@ def test_recortes_por_linguagem(runtime):
         ("/cinema", cinema), ("/exposicoes", exposicao),
     ):
         texto = say(runtime, comando)
-        assert f"#{esperado.id}" in texto, comando
-        assert f"#{outro.id}" not in texto, comando
+        assert esperado.title in texto, comando
+    # "outro" não aparece; a ficha nova não expõe #ID
+        assert "Feira de Artesanato" not in texto, comando
 
 
 def test_categoria_canonica_tambem_casa(runtime):
     show = add_event(runtime, dias=15, titulo="Apresentação X", categoria="Música")
-    assert f"#{show.id}" in say(runtime, "/musica")
+    assert "Apresentação X" in say(runtime, "/musica")
 
 
 def test_noite_filtra_horario_local(runtime):
@@ -171,8 +173,8 @@ def test_noite_filtra_horario_local(runtime):
     tarde = add_event(runtime, dias=2, hora="15:00", titulo="Tarde Cultural")
 
     texto = say(runtime, "/noite")
-    assert f"#{noite.id}" in texto
-    assert f"#{tarde.id}" not in texto
+    assert "Show da Noite" in texto
+    assert "Tarde Cultural" not in texto
 
 
 def test_ufba_por_local(runtime):
@@ -180,7 +182,7 @@ def test_ufba_por_local(runtime):
                      titulo="Recital de Formatura")
     outro = add_event(runtime, dias=5, local="Teatro Castro Alves", titulo="Show Qualquer")
     texto = say(runtime, "/ufba")
-    assert f"#{ufba.id}" in texto
+    assert "Recital de Formatura" in texto
     assert f"#{outro.id}" not in texto
 
 

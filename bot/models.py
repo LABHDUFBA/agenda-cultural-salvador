@@ -144,6 +144,9 @@ class Event:
     categoria: str = ""
     preco: str = ""
     endereco: str = ""
+    # Link de venda/ingresso (Bilheteria Digital, Sympla, etc.). Distinto de
+    # source_url (a página da fonte onde o evento foi coletado).
+    url_ingresso: str = ""
     created_at: str = field(default_factory=now_iso)
     updated_at: str = field(default_factory=now_iso)
 
@@ -161,6 +164,9 @@ class Event:
         source_url = _clean(self.source_url, "Link da fonte", MAX_URL, required=False)
         if source_url and not is_http_url(source_url):
             raise ValidationError("Link da fonte deve começar com http:// ou https://.")
+        url_ingresso = _clean(self.url_ingresso, "Link do ingresso", MAX_URL, required=False)
+        if url_ingresso and not is_http_url(url_ingresso):
+            raise ValidationError("Link do ingresso deve começar com http:// ou https://.")
         auth_ref = _clean(
             self.authorization_reference, "Referência da autorização", 300, required=False
         )
