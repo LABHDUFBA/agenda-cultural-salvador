@@ -64,6 +64,17 @@ def test_env_example_padroes_seguros():
     assert int(values["AGENDA_BACKUP_KEEP"]) >= 7
 
 
+def test_env_example_documenta_ia_opcional_desligada():
+    """A IA é opcional: o modelo precisa vir desligada e sem chave."""
+    values = parse_env_example()
+    assert values["AGENDA_IA_ENABLED"] == "0"
+    assert values["REFUSELESS_API_KEY"] == ""
+    assert values["AGENDA_IA_BASE_URL"] == "https://api.refuseless.com/v1"
+    assert values["AGENDA_IA_MODEL"] == "deepseek-v4.1-flash-abliterated"
+    assert 1 <= int(values["AGENDA_IA_MAX_CHAMADAS_LOTE"]) <= 5
+    assert 1 <= int(values["AGENDA_IA_MAX_CHAMADAS_DIA"]) <= 100
+
+
 def test_env_example_documenta_backup_e_agenda():
     values = parse_env_example()
     assert values["AGENDA_BACKUP_DIR"]

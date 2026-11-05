@@ -8,7 +8,7 @@ import pytest
 
 from conftest import REPO
 
-DOCS = ["deploy.md", "operations.md", "security.md", "scheduling.md"]
+DOCS = ["deploy.md", "operations.md", "security.md", "scheduling.md", "ia.md"]
 
 
 @pytest.mark.parametrize("name", DOCS)

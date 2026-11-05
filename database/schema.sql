@@ -245,3 +245,64 @@ BEFORE DELETE ON feiras_evidencias
 BEGIN
     SELECT RAISE(ABORT, 'feiras_evidencias e append-only: DELETE nao permitido');
 END;
+
+-- ---------------------------------------------------------------------------
+-- Integração OPCIONAL de IA (Refuseless). Tabelas aditivas: nada aqui altera
+-- `eventos`, e nenhum caminho de código grava status a partir de sugestão.
+--
+-- `ia_sugestoes` guarda a classificação proposta COM a proveniência da entrada
+-- (hash do texto exato enviado, URL da fonte e trecho). `ia_chamadas` registra
+-- toda tentativa, inclusive as que falharam, para que o teto diário de uso seja
+-- auditável e não apenas uma promessa no prompt.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ia_sugestoes (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    evento_id      INTEGER REFERENCES eventos(id) ON DELETE CASCADE,
+    provedor       TEXT    NOT NULL DEFAULT 'refuseless',
+    base_url       TEXT    NOT NULL,
+    modelo         TEXT    NOT NULL,
+    prompt_versao  TEXT    NOT NULL,
+    -- Proveniência da ENTRADA: sem estes três campos a sugestão não existe.
+    hash_entrada   TEXT    NOT NULL CHECK (length(hash_entrada) = 64),
+    url_original   TEXT    NOT NULL DEFAULT '',
+    trecho_entrada TEXT    NOT NULL DEFAULT '',
+    saida_json     TEXT    NOT NULL DEFAULT '{}',
+    categoria      TEXT    NOT NULL DEFAULT '',
+    publico        TEXT    NOT NULL DEFAULT '',
+    faixa_etaria   TEXT    NOT NULL DEFAULT '',
+    gratuito       INTEGER CHECK (gratuito IS NULL OR gratuito IN (0, 1)),
+    acessibilidade TEXT    NOT NULL DEFAULT '',
+    tags           TEXT    NOT NULL DEFAULT '',
+    resumo         TEXT    NOT NULL DEFAULT '',
+    confianca      REAL    NOT NULL CHECK (confianca >= 0.0 AND confianca <= 1.0),
+    justificativa  TEXT    NOT NULL DEFAULT '',
+    campos_incertos TEXT   NOT NULL DEFAULT '',
+    status         TEXT    NOT NULL DEFAULT 'sugerida'
+                           CHECK (status IN ('sugerida', 'aceita', 'descartada')),
+    criada_em      TEXT    NOT NULL,
+    decidida_em    TEXT,
+    decidida_por   TEXT    NOT NULL DEFAULT '',
+    CHECK (length(trim(modelo)) > 0),
+    CHECK (status = 'sugerida'
+           OR (decidida_em IS NOT NULL AND length(trim(decidida_por)) > 0))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ia_sugestoes_evento ON ia_sugestoes(evento_id);
+CREATE INDEX IF NOT EXISTS idx_ia_sugestoes_hash   ON ia_sugestoes(hash_entrada);
+CREATE INDEX IF NOT EXISTS idx_ia_sugestoes_status ON ia_sugestoes(status, criada_em);
+
+CREATE TABLE IF NOT EXISTS ia_chamadas (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    modelo        TEXT    NOT NULL,
+    hash_entrada  TEXT    NOT NULL CHECK (length(hash_entrada) = 64),
+    evento_id     INTEGER REFERENCES eventos(id) ON DELETE SET NULL,
+    -- 'cache' e 'limite' nunca chegam à rede; só 'ok' e 'erro' custam chamada.
+    resultado     TEXT    NOT NULL
+                          CHECK (resultado IN ('ok', 'erro', 'cache', 'limite')),
+    detalhe       TEXT    NOT NULL DEFAULT '',
+    duracao_ms    INTEGER NOT NULL DEFAULT 0 CHECK (duracao_ms >= 0),
+    criada_em     TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_ia_chamadas_dia ON ia_chamadas(criada_em, resultado);

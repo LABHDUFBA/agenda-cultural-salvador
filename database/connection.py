@@ -8,9 +8,10 @@ from pathlib import Path
 
 from .erros import ErroBanco
 
-# v3: tabelas `feiras`, `feiras_fontes` e `feiras_evidencias` (aditivo; nenhuma
-# tabela ou coluna existente foi alterada).
-SCHEMA_VERSION = 3
+# v4: tabelas `ia_sugestoes` e `ia_chamadas` (integração opcional de IA;
+# aditivo — nenhuma tabela ou coluna existente foi alterada).
+# v3: tabelas `feiras`, `feiras_fontes` e `feiras_evidencias` (aditivo).
+SCHEMA_VERSION = 4
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
 # Colunas adicionadas depois da versão 1. `CREATE TABLE IF NOT EXISTS` não

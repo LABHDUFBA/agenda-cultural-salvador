@@ -11,6 +11,12 @@ canônico (``collectors.ingest``), sempre como **pendente** ou **rejeitado**;
 aprovar é ato humano no bot e publicar exige autorização + frase de
 confirmação (ver docs/security.md).
 
+``--ia`` liga o enriquecimento opcional por IA (classificação assistida). Só
+funciona com ``--gravar`` e exige ``AGENDA_IA_ENABLED=1`` **e**
+``REFUSELESS_API_KEY`` no ambiente; faltando qualquer um, o comando sai com
+código 2 em vez de seguir silenciosamente sem IA. Sem ``--ia`` nenhuma chamada
+de rede além da coleta acontece.
+
 Falha de uma fonte não interrompe as demais: cada fonte tem seu próprio
 resultado, e a saída diz exatamente o que passou e o que falhou.
 
@@ -18,6 +24,7 @@ resultado, e a saída diz exatamente o que passou e o que falhou.
     python scripts/coleta.py --fontes tca,sympla_salvador --limite 20
     python scripts/coleta.py --gravar --json
     python scripts/coleta.py --gravar --db /app/data/agenda.db
+    python scripts/coleta.py --gravar --ia --fontes tca --limite 10
 
 Códigos de saída:
     0  pelo menos uma fonte coletou e nenhuma falhou (parcial ainda é 0 se
@@ -64,7 +71,7 @@ def resolver_fontes(ids: list[str] | None) -> list[FonteCultural]:
     return selecionadas
 
 
-def coletar_fonte(fonte: FonteCultural, limite: int | None, conn) -> dict:
+def coletar_fonte(fonte: FonteCultural, limite: int | None, conn, ia=None) -> dict:
     """Coleta (e opcionalmente grava) uma única fonte, isolando a falha."""
     item: dict = {
         "fonte": fonte.id,
@@ -81,7 +88,7 @@ def coletar_fonte(fonte: FonteCultural, limite: int | None, conn) -> dict:
         item["total"] = len(eventos)
         item["estado_coletor"] = getattr(coletor, "ultimo_estado", {})
         if conn is not None:
-            resultado = ingerir_coletados(conn, fonte, eventos)
+            resultado = ingerir_coletados(conn, fonte, eventos, ia=ia)
             item["persistencia"] = resultado.to_dict()
         item["ok"] = True
     except ErroColeta as erro:
@@ -104,6 +111,17 @@ def _agregar(itens: list[dict]) -> dict:
     return totais
 
 
+def _agregar_ia(itens: list[dict]) -> dict:
+    """Soma os contadores de IA do lote. Ausente == integração não usada."""
+    chaves = ("sugeridas", "ignoradas", "em_cache", "bloqueadas", "falhas", "chamadas")
+    total = {chave: 0 for chave in chaves}
+    for item in itens:
+        resumo = (item.get("persistencia") or {}).get("ia") or {}
+        for chave in chaves:
+            total[chave] += int(resumo.get(chave) or 0)
+    return total
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="coleta", description=__doc__,
@@ -117,6 +135,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="persiste no banco canônico (sempre pendente/rejeitado)")
     parser.add_argument("--db", default=None,
                         help="SQLite de destino (padrão: AGENDA_DB ou data/agenda.db)")
+    parser.add_argument("--ia", action="store_true",
+                        help="enriquecimento opcional por IA (exige AGENDA_IA_ENABLED=1 "
+                             "e REFUSELESS_API_KEY; requer --gravar)")
     parser.add_argument("--json", action="store_true", help="saída JSON")
     args = parser.parse_args(argv)
 
@@ -124,6 +145,24 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"erro": "limite não pode ser negativo"}, ensure_ascii=False),
               file=sys.stderr)
         return 2
+    if args.ia and not args.gravar:
+        print(json.dumps(
+            {"erro": "--ia exige --gravar: sugestão sem evento persistido não tem onde morar"},
+            ensure_ascii=False), file=sys.stderr)
+        return 2
+
+    enriquecimento = None
+    if args.ia:
+        from ia import EnriquecimentoIA, IaConfig  # noqa: PLC0415 - opcional
+
+        config_ia = IaConfig.from_env()
+        if not config_ia.habilitada:
+            print(json.dumps(
+                {"erro": "integração de IA desligada",
+                 "motivo": config_ia.motivo_desabilitada,
+                 "exigido": ["AGENDA_IA_ENABLED=1", "REFUSELESS_API_KEY"]},
+                ensure_ascii=False), file=sys.stderr)
+            return 2
 
     ids = [parte.strip() for parte in args.fontes.split(",") if parte.strip()]
     try:
@@ -146,7 +185,9 @@ def main(argv: list[str] | None = None) -> int:
             import os  # noqa: PLC0415
 
             conn = abrir_banco(args.db or os.environ.get("AGENDA_DB") or "data/agenda.db")
-        itens = [coletar_fonte(fonte, args.limite, conn) for fonte in fontes]
+        if args.ia and conn is not None:
+            enriquecimento = EnriquecimentoIA(conn, config_ia)
+        itens = [coletar_fonte(fonte, args.limite, conn, enriquecimento) for fonte in fontes]
     finally:
         if conn is not None:
             conn.close()
@@ -155,12 +196,14 @@ def main(argv: list[str] | None = None) -> int:
     relatorio = {
         "iniciado_em": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "gravado": bool(args.gravar),
+        "ia": bool(args.ia),
         "limite": args.limite,
         "total_fontes": len(itens),
         "fontes_ok": len(sucessos),
         "fontes_com_falha": len(itens) - len(sucessos),
         "total_eventos": sum(i["total"] for i in itens),
         **_agregar(itens),
+        "ia_resumo": _agregar_ia(itens),
         "fontes": itens,
     }
 

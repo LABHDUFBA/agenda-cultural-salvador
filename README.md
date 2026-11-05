@@ -22,7 +22,15 @@ feiras/
   catalogo.py     feiras de Salvador com trecho de fonte por campo
   repository.py   carga idempotente e consulta (SQLite, schema canônico)
   cli.py          carregar | listar | buscar | evidencias | fontes | verificar
-tests/test_bot.py 32 testes, todos offline
+ia/               integração OPCIONAL de IA (desligada por padrão, ver docs/ia.md)
+  config.py       IaConfig.from_env: exige flag E chave; chave nunca em repr
+  cliente.py      chat/completions via urllib, transporte injetável (sem rede nos testes)
+  esquema.py      prompt versionado + validação estrita da saída (vocabulário fechado)
+  modelos.py      TextoEntrada (proveniência) e SugestaoIA (pode_aprovar == False)
+  enriquecimento.py orçamento por item/lote/dia, cache por hash, fail-safe
+  repository.py   ia_sugestoes / ia_chamadas; aceite humano auditado
+  cli.py          verificar | listar | aceitar | descartar | consumo
+tests/test_ia.py 57 testes, todos offline (transporte dublê, zero socket)
 scripts/demo_offline.py  passeio completo pelo ciclo de vida
 ```
 
@@ -75,6 +83,31 @@ descartado em silêncio).
 `/rejeitar` grava o motivo em `eventos.motivo` e a auditoria append-only
 preserva o estado anterior e o motivo que a ingestão havia registrado; a
 proveniência nunca é apagada. Evento já publicado não pode ser rejeitado.
+
+## Integração opcional de IA (Refuseless)
+
+Classificação assistida para a fila de revisão. **Desligada por padrão**:
+sem `AGENDA_IA_ENABLED=1` **e** `REFUSELESS_API_KEY` nenhum código de rede do
+pacote `ia/` roda, e `pytest`/Docker/CI seguem sem credencial.
+
+- a sugestão vive em `ia_sugestoes`, nunca em `eventos.status`; aprovar
+  continua sendo ato humano (`/aprovar`, `bot/admin.py`);
+- cada linha guarda a proveniência da **entrada**: SHA-256 do texto enviado,
+  URL da fonte, trecho de evidência, modelo e versão do prompt;
+- uso parcimonioso: só evento sem categoria (ou com confiança baixa) consome
+  chamada, com teto por lote, teto diário auditado em `ia_chamadas` e cache
+  por hash da entrada;
+- falha de IA não muda status nem derruba a coleta; não há retry;
+- `aceitar` só aplica `categoria`, só em evento `pendente`, com `--ator` e
+  trilha em `auditoria`.
+
+```bash
+python -m ia.cli verificar            # configuração, sem rede
+python -m ia.cli verificar --executar # UMA chamada real
+python scripts/coleta.py --gravar --ia --fontes tca --limite 10
+```
+
+Detalhes, tabelas e limites em [docs/ia.md](docs/ia.md).
 
 ## Comandos
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from database import (
     DadoInvalido,
@@ -41,6 +41,11 @@ from sources.catalog import FonteCultural, por_id
 from .models import EventoColetado
 from .registry import obter_por_id
 
+# Enriquecimento por IA é opcional e injetado: este módulo não importa ``ia``
+# no topo para que o caminho determinístico continue sem depender dele.
+if TYPE_CHECKING:  # pragma: no cover
+    from ia.enriquecimento import EnriquecimentoIA
+
 
 class FonteNaoColetavel(DadoInvalido):
     """A fonte existe no catálogo mas não pode ser coletada com segurança."""
@@ -57,13 +62,14 @@ class ResultadoColeta:
     duplicados: int = 0
     resultados: tuple[ResultadoIngestao, ...] = ()
     erros: tuple[str, ...] = ()
+    ia: dict | None = None
 
     @property
     def pendentes(self) -> int:
         return self.aceitos
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        dados: dict[str, object] = {
             "fonte": self.fonte,
             "fonte_id": self.fonte_id,
             "sessao_id": self.sessao_id,
@@ -73,6 +79,9 @@ class ResultadoColeta:
             "duplicados": self.duplicados,
             "erros": list(self.erros),
         }
+        if self.ia is not None:
+            dados["ia"] = self.ia
+        return dados
 
 
 def garantir_fonte(conn, fonte: FonteCultural) -> int:
@@ -113,8 +122,13 @@ def ingerir_coletados(
     eventos: Iterable[EventoColetado],
     *,
     capturado_em: datetime | None = None,
+    ia: "EnriquecimentoIA | None" = None,
 ) -> ResultadoColeta:
-    """Grava os eventos coletados como pendentes/rejeitados no banco canônico."""
+    """Grava os eventos coletados como pendentes/rejeitados no banco canônico.
+
+    ``ia`` é opcional e só roda depois que a escrita determinística terminou:
+    uma falha de IA não muda um único status, e o lote já está persistido.
+    """
     if not fonte.coletavel:
         raise FonteNaoColetavel(
             f"fonte {fonte.id!r} não é coletável "
@@ -130,6 +144,7 @@ def ingerir_coletados(
     capturado = capturado_em or agora_utc()
     resultados: list[ResultadoIngestao] = []
     erros: list[str] = []
+    pares: list[tuple[EventoColetado, int]] = []
 
     try:
         for item in itens:
@@ -140,14 +155,17 @@ def ingerir_coletados(
                         fonte_id=fonte_id, sessao_id=sessao_id, capturado_em=capturado
                     )
                 )
-                resultados.append(
-                    ingerir_evento(
-                        conn,
-                        evento,
-                        prov,
-                        motivos_extra=motivos_de_revisao(item),
-                    )
+                resultado = ingerir_evento(
+                    conn,
+                    evento,
+                    prov,
+                    motivos_extra=motivos_de_revisao(item),
                 )
+                resultados.append(resultado)
+                # Só evento pendente e persistido recebe sugestão: rejeitado não
+                # volta atrás por opinião de modelo.
+                if resultado.status == "pendente" and resultado.evento_id:
+                    pares.append((item, int(resultado.evento_id)))
             except (ValueError, DadoInvalido) as exc:
                 erros.append(f"{item.titulo!r}: {exc}")
         finalizar_sessao(
@@ -164,6 +182,14 @@ def ingerir_coletados(
             pass
         raise
 
+    resumo_ia: dict | None = None
+    if ia is not None:
+        # Best-effort: o lote já está gravado e nenhum status depende disto.
+        try:
+            resumo_ia = ia.processar_lote(pares).to_dict()
+        except Exception as exc:  # noqa: BLE001 - IA opcional nunca derruba coleta
+            resumo_ia = {"habilitada": True, "erro": f"{type(exc).__name__}: {exc}"}
+
     contadores = conn.execute(
         "SELECT coletados, aceitos, rejeitados, duplicados FROM sessoes WHERE id = ?",
         (sessao_id,),
@@ -178,6 +204,7 @@ def ingerir_coletados(
         duplicados=int(contadores["duplicados"]),
         resultados=tuple(resultados),
         erros=tuple(erros),
+        ia=resumo_ia,
     )
 
 
@@ -205,7 +232,21 @@ def fila_de_revisao(conn, limite: int = 50) -> list[dict]:
             requisitos_publicacao_evento(conn, int(evento["id"]))
         )
         evento["proveniencia"] = obter_evento(conn, int(evento["id"]))["proveniencia"]
+        # Sugestões de IA, quando existirem. Consultivas: quem lê decide.
+        evento["sugestoes_ia"] = _sugestoes_ia(conn, int(evento["id"]))
     return fila
+
+
+def _sugestoes_ia(conn, evento_id: int) -> list[dict]:
+    """Leitura tolerante: banco antigo sem as tabelas de IA devolve lista vazia."""
+    try:
+        from ia.repository import sugestoes_do_evento  # noqa: PLC0415
+    except ImportError:  # pragma: no cover
+        return []
+    try:
+        return sugestoes_do_evento(conn, evento_id)
+    except Exception:  # noqa: BLE001 - tabela ausente / banco somente leitura
+        return []
 
 
 __all__ = [
