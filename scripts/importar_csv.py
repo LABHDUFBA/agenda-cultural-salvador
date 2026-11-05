@@ -131,70 +131,82 @@ def principal(argv: list[str] | None = None) -> int:
             sessoes_por_fonte[nome_fonte] = iniciar_sessao(conn, fonte_ids[nome_fonte])
 
         hora = limpar(linha.get("hora"))
-        if hora:
-            try:
-                h, m = hora.split(":")[:2]
-                inicio = f"{data}T{int(h):02d}:{int(m):02d}"
-            except ValueError:
-                inicio = data
-        else:
-            inicio = data
+        # Sessões múltiplas no mesmo dia: 'horas' vem como "10:00|15:00".
+        # Cada sessão vira um evento próprio (mesma ficha, hora distinta).
+        horas_sessoes = [h.strip() for h in limpar(linha.get("horas")).split("|") if h.strip()]
+        if horas_sessoes and hora and hora not in horas_sessoes:
+            horas_sessoes.append(hora)
 
         local = limpar(linha.get("local"))
         resumo = limpar(linha.get("resumo"))
         preco = limpar(linha.get("preco"))
+        repeticoes = limpar(linha.get("repeticoes")) or "1"
 
-        try:
-            coletado = EventoColetado(
-                fonte_id=nome_fonte,
+        sessoes_hora = horas_sessoes if horas_sessoes else ([hora] if hora else [None])
+
+        for hora_sessao in sessoes_hora:
+            if hora_sessao:
+                try:
+                    h, m = hora_sessao.split(":")[:2]
+                    inicio = f"{data}T{int(h):02d}:{int(m):02d}"
+                except ValueError:
+                    inicio = data
+            else:
+                inicio = data
+
+            try:
+                coletado = EventoColetado(
+                    fonte_id=nome_fonte,
+                    titulo=titulo,
+                    inicio_em=para_dt(inicio),
+                    url_original=url,
+                    metodo_extracao=METODO,
+                    confianca=CONFIANCA,
+                    trecho=(resumo or titulo)[:500],
+                    descricao=resumo,
+                    local_nome=local,
+                    preco=preco,
+                    campos_inferidos=("hora",) if not hora_sessao else (),
+                )
+            except ValueError as exc:
+                erros += 1
+                print(f"  pulando '{titulo[:40]}': {exc}")
+                continue
+
+            evento = Evento(
                 titulo=titulo,
                 inicio_em=para_dt(inicio),
-                url_original=url,
-                metodo_extracao=METODO,
-                confianca=CONFIANCA,
-                trecho=(resumo or titulo)[:500],
-                descricao=resumo,
+                municipio=detectar_municipio(titulo, local),
+                uf="BA",
                 local_nome=local,
+                descricao=resumo,
                 preco=preco,
-                campos_inferidos=("hora",) if not hora else (),
+                url_ingresso=url if "ingresso" not in url.lower() else "",
             )
-        except ValueError as exc:
-            erros += 1
-            print(f"  pulando '{titulo[:40]}': {exc}")
-            continue
+            prov = Proveniencia(
+                fonte_id=fonte_ids[nome_fonte],
+                url_original=url,
+                sessao_id=sessoes_por_fonte[nome_fonte],
+                hash_conteudo=hashlib.sha256((titulo + url + inicio).encode()).hexdigest(),
+                trecho=(resumo or titulo)[:500],
+            )
+            motivos = []
+            if not hora_sessao:
+                motivos.append("hora_ausente_na_fonte")
+            if not local:
+                motivos.append("local_ausente_na_fonte")
+            if repeticoes not in ("", "1"):
+                motivos.append(f"sessoes_multiplos_horarios:{repeticoes}")
 
-        evento = Evento(
-            titulo=titulo,
-            inicio_em=para_dt(inicio),
-            municipio=detectar_municipio(titulo, local),
-            uf="BA",
-            local_nome=local,
-            descricao=resumo,
-            preco=preco,
-            url_ingresso=url if "ingresso" not in url.lower() else "",
-        )
-        prov = Proveniencia(
-            fonte_id=fonte_ids[nome_fonte],
-            url_original=url,
-            sessao_id=sessoes_por_fonte[nome_fonte],
-            hash_conteudo=hashlib.sha256((titulo + url).encode()).hexdigest(),
-            trecho=(resumo or titulo)[:500],
-        )
-        motivos = []
-        if not hora:
-            motivos.append("hora_ausente_na_fonte")
-        if not local:
-            motivos.append("local_ausente_na_fonte")
-
-        res = ingerir_evento(conn, evento, prov, motivos_extra=motivos)
-        if res.status == "pendente":
-            aceitos += 1
-            if res.evento_id:
-                ids_importados.append(res.evento_id)
-        elif res.status == "duplicado":
-            duplicados += 1
-        else:
-            rejeitados += 1
+            res = ingerir_evento(conn, evento, prov, motivos_extra=motivos)
+            if res.status == "pendente":
+                aceitos += 1
+                if res.evento_id:
+                    ids_importados.append(res.evento_id)
+            elif res.status == "duplicado":
+                duplicados += 1
+            else:
+                rejeitados += 1
 
     for nome, sid in sessoes_por_fonte.items():
         finalizar_sessao(conn, sid)
